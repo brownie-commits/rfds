@@ -687,14 +687,14 @@ library(nycflights13)
 
 library(tidyverse)
 
-view(nycflights13)
-
 ?flights
-
 
 nycflights13::flights
 
 view(flights)
+
+flights %>%  
+  filter(month == 1, day == 1)
 
 filter(flights, month == 1, day == 1)
 
@@ -756,8 +756,10 @@ filter(flights, dep_time <= 600 | dep_time == 2400)
 # OR Modulo operator
 
 filter(flights, dep_time %% 2400 <= 600)
+filter(flights, dep_time <= 600)
 
-summary(flights$dep_time)
+sum
+mary(flights$dep_time)
 
 ?between()
 
@@ -977,14 +979,87 @@ flight_times <- mutate(flights,
                                                 sched_dep_time %% 100) %% 1440)
 
 
+# quick note on modular arithmetic
+
+# The modulus (%%) operator finds the remainder after division. Here's how it works for 517 %% 100:
+# 1. Perform integer division- 517 ÷ 100 = 5.17 → The whole number part is 5.
+# 2. Multiply back to find the nearest multiple of 100- 5 × 100 = 500.
+# 3. Find the remainder- 517 - 500 = 17.
+# 4. So, 517 %% 100 gives the remainder 17.
+
+
+as_date(365 * 10)
+
+d1 <- mdy("January 1, 2020")
+d2 <- dmy("06-Jun-17")
+
+d2 <- as.date()
+
+
+year(d2)
+month(d2)
+day(d2)
+wday(d2, label = TRUE, week_start = 1)
+wday(d2, label = FALSE, week_start = 1)
+
+view(flights)
+
+flights_dt <- flights %>% 
+  filter(!is.na(dep_time), !is.na(arr_time)) %>% 
+  mutate(
+    dep_time = make_datetime_100(year, month, day, dep_time),
+    arr_time = make_datetime_100(year, month, day, arr_time), 
+    sched_dep_time = make_datetime_100(year, month, day, sched_dep_time), 
+    sched_arr_time = make_datetime_100(year, month, day, sched_arr_time)) %>% 
+  select(origin,dest, ends_with("delay"), ends_with("time"))
+
+glimpse(flights_dt)
+rounded_flights_dt <- flights_dt %>% count(week = floor_date(dep_time, "week"))
+
+view(rounded_flights_dt)
+
+
 select(flights, air_time, arr_time, dep_time, everything())
 
 flights_airtime <- mutate(flights, 
-                          arr_time = (arr_time %/% 100 * 60 + arr_time %% 100) %% 1440, 
+                          arr_time = (arr_time %/% 100 * 
+                                        
+                                        60 + arr_time %% 100) %% 1440, 
                           dep_time = (dep_time %/% 100 * 60 + dep_time) %% 1440, 
                           air_time_diff = air_time - arr_time + dep_time)
 
 
+flights_dt_update <- flights_dt %>%  
+  mutate(dep_hour = update(dep_time, yday = 1))
+
+flights_dt %>%  
+  mutate(dep_hour = update(dep_time, yday = 1)) %>%  
+  ggplot(aes(dep_hour)) +
+  geom_freqpoly(binwidth = 300)
+
+tomorrow <- today() + dhours(48)
+
+tomorrow <- today() + days(1)
+
+tomorrow
+
+flights_dt %>%  
+  filter(arr_time < dep_time)
+
+flights_dt_overnight <-  flights_dt %>%
+  mutate(overnight = arr_time < dep_time, 
+          arr_time = arr_time + days(overnight * 1), 
+          sched_arr_time = sched_arr_time + days(overnight * 1))
+  
+next_year <- today() + years(1)
+
+(today() %--% next_year) / ddays(1)
+
+
+
+make_datetime_100 <- function(year, month, day, time) {
+  make_datetime(year, month, day, time %/% 100, time %% 100)
+}
 
 # Delete below
 flights_airtime
@@ -1412,9 +1487,11 @@ union(df1, df2)
 setdiff(df1, df2)
 
 x <- c("abc", NA)
+
 str_c("|-", x, "-|")
 
 x <- c("Apple", "Banana", "Pear")
+
 str_to_lower(x)
 
 x <- c("apple", "banana", "pear")
@@ -1431,6 +1508,123 @@ view(dot)
 writeLines(dot$x)
 
 str_view(c("abc", "a.c", "a*c", "a c"), "a[.]c")
+
+
+x <- "a\\b"
+
+str_view(x, "\\\\")
+
+
+x <- "1888 is the longest year in Roman numerals: MDCCCLXXXVIII"
+str_view(x, "CC?")
+#> [1] │ 1888 is the longest year in Roman numerals: MD<CC><C>LXXXVIII
+
+str_view(x, "CC+")
+#> [1] │ 1888 is the longest year in Roman numerals: MD<CCC>LXXXVIII
+str_view(x, 'C[LX]+')
+#> [1] │ 1888 is the longest year in Roman numerals: MDCC<CLXXX>VIII
+
+view(words)
+
+df <- tibble(
+  word = words, 
+  i = seq_along(word)
+)
+
+df %>% 
+  filter(str_count(word, "x$"))
+
+df %>% 
+  mutate(
+    vowels = str_count(word, "[aeiou]"),
+    consonants = str_count(word, "[^aeiou]")
+  )
+
+colours <- c("red", "orange", "yellow", "green", "blue", "purple")
+colour_match <- str_c(colours, collapse = "|")
+colour_match
+
+has_colour <- str_subset(sentences, colour_match)
+matches <- str_extract(has_colour, colour_match)
+head(matches)
+
+
+x <- c("apple", "pear", "banana")
+
+str_replace(x, "[aeiou]", "-")
+
+str_replace_all(x, "[aeiou]", "-")
+
+
+x <- c("1 house", "2 cars", "3 people")
+
+str_replace_all(x, c("1" = "one", "2" = "two", "3" = "three"))
+
+
+sentences %>%
+  head(5) %>% 
+  str_split(" ")
+
+view(fruit)
+
+str_view(fruit, "nana")
+
+x <- "Line 1\nLine 2\nLine 3"
+str_extract_all(x, "^Line")[[1]]
+
+
+# Factors 
+
+x1 <- c("Dec", "Apr", "Jan", "Mar")
+
+x2 <- c("Dec", "Apr", "Jam", "Mar")
+
+month_levels <- c(
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+)
+
+y1 <- factor(x1, levels = month_levels)
+
+y1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
