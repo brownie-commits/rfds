@@ -10,6 +10,4 @@ c(TRUE, TRUE, FALSE, NA)
 typeof(1)
 #> [1] "double"
 typeof(1L)
-#> [1] "integer"
-1.5L
-#> [1] 1.5
+#> [1] "in
